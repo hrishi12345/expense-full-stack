@@ -31,7 +31,7 @@ module.exports=class Product{
                   
                   return true;
                 } else {
-                  console.log('Error: Invalid email or password');
+                  res.status(401).send('User not Found')
                   return false;
                 }
               })
@@ -48,7 +48,7 @@ module.exports=class Product{
                   console.log('User exists');
                   return true;
                 } else {
-                  console.log('User does not exist');
+                  res.status(404).send('User does not exist');
                   return false;
                 }
               })

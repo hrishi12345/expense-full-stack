@@ -11,7 +11,7 @@ router.post('/signup', async (req, res) => {
   try {
     const userExists = await Product.fetchById(email);
     if (userExists) {
-      console.log('User exists');
+      res.status(302).send('User Exists')
     } else {
       await Product.signUp(email, password, username);
       console.log('Sign up successful.');
@@ -35,7 +35,7 @@ router.post('/login', async (req, res) => {
       if (loginSuccessful) {
         console.log('Login successful');
       } else {
-        console.log('Invalid email or password');
+        res.status(405).send('Invalid email or password');
       }
     } else {
       console.log('User not found');
