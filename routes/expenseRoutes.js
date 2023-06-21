@@ -50,7 +50,15 @@ router.post('/login', async (req, res) => {
 router.get('/', (req, res) => {
   res.sendFile('expense.html', { root: './views' });
 });
-
+router.get('/addExpensePage', async function (req, res) {
+    try {
+      const products = await Expense.fetchAll();
+      res.render('addExpensePage.html', {root:'./views'});
+    } catch (error) {
+      console.log(error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
 router.get('/loginpage', (req, res) => {
   res.sendFile('expenseLogin.html', { root: './views' });
 });

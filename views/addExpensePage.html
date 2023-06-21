@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Expense Tracker</title>
+</head>
+<body>
+  <form action="/addexpense" method="post">
+    <label for="amount">Expense Amount</label>
+    <input id="amount" name="amount">
+    <label for="description">Description</label>
+    <input id="description" name="description">
+    <select id="items" name="items">
+      <option value="fuel">Fuel</option>
+      <option value="food">Food</option>
+      <option value="rent">Rent</option>
+    </select>
+    <button type="submit">Add Expense</button>
+  </form>
+  
+  <h2>Expense List</h2>
+  <div id="expenseList">
+    <ul></ul>
+  </div>
+  
+  <script>
+    // Function to fetch expenses and select options from the server-side
+    async function fetchData() {
+      try {
+        const [expensesResponse, optionsResponse] = await Promise.all([
+          fetch('/expenses'), // Replace with your server-side route to fetch expenses
+          fetch('/options'), // Replace with your server-side route to fetch select options
+        ]);
+
+        const expenses = await expensesResponse.json();
+        const options = await optionsResponse.json();
+
+        return { expenses, options };
+      } catch (error) {
+        console.log('An error occurred while fetching data:', error);
+        return { expenses: [], options: [] };
+      }
+    }
+
+    // Function to populate the expense list
+    function populateExpenseList(expenses) {
+      const expenseList = document.querySelector('#expenseList ul');
+      expenseList.innerHTML = '';
+
+      expenses.forEach((expense) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${expense.description} - $${expense.amount}`;
+        expenseList.appendChild(listItem);
+      });
+    }
+
+    // Function to populate the select options
+    function populateSelectOptions(options) {
+      const selectElement = document.querySelector('#items');
+
+      options.forEach((option) => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        selectElement.appendChild(optionElement);
+      });
+    }
+
+    // Function to fetch and populate data
+    async function fetchDataAndPopulate() {
+      const { expenses, options } = await fetchData();
+      populateExpenseList(expenses);
+      populateSelectOptions(options);
+    }
+
+    // Call the function to fetch and populate data on page load
+    fetchDataAndPopulate();
+  </script>
+</body>
+</html>
