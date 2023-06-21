@@ -24,6 +24,23 @@ module.exports=class Product{
             const product = new Product(email, username, password);
             return product.save();
           }
+          static login(email, password) {
+            return db.execute('SELECT email, password FROM email WHERE email=? AND password=?', [email, password])
+              .then(([rows, fieldData]) => {
+                if (rows.length > 0) {
+                  
+                  return true;
+                } else {
+                  console.log('Error: Invalid email or password');
+                  return false;
+                }
+              })
+              .catch((error) => {
+                console.log('An error occurred while performing login:', error);
+                throw error;
+              });
+          }
+          
           static fetchById(email) {
             return db.execute('SELECT EMAIL FROM email WHERE email=?', [email])
               .then(([rows, fieldData]) => {
