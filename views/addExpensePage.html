@@ -4,7 +4,7 @@
   <title>Expense Tracker</title>
 </head>
 <body>
-  <form action="/addexpense" method="post">
+  <form id="expenseForm">
     <label for="amount">Expense Amount</label>
     <input id="amount" name="amount">
     <label for="description">Description</label>
@@ -16,28 +16,25 @@
     </select>
     <button type="submit">Add Expense</button>
   </form>
-  
+  <button id="rzp-button1">Buy Premium</button>
   <h2>Expense List</h2>
   <div id="expenseList">
     <ul></ul>
   </div>
-  
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    // Function to fetch expenses and select options from the server-side
-    async function fetchData() {
+    // Function to fetch expenses from the server-side
+    async function fetchExpenses() {
       try {
-        const [expensesResponse, optionsResponse] = await Promise.all([
-          fetch('/expenses'), // Replace with your server-side route to fetch expenses
-          fetch('/options'), // Replace with your server-side route to fetch select options
-        ]);
-
-        const expenses = await expensesResponse.json();
-        const options = await optionsResponse.json();
-
-        return { expenses, options };
+        const token = localStorage.getItem('token'); // Retrieve the authorization token from local storage
+        axios.defaults.headers.common['Authorization'] = token; // Set the authorization token in the default headers
+        const response = await axios.get('/expenses');
+        const expenses = response.data;
+        return expenses;
       } catch (error) {
-        console.log('An error occurred while fetching data:', error);
-        return { expenses: [], options: [] };
+        console.log('An error occurred while fetching expenses:', error);
+        return [];
       }
     }
 
@@ -48,32 +45,77 @@
 
       expenses.forEach((expense) => {
         const listItem = document.createElement('li');
-        listItem.textContent = `${expense.description} - $${expense.amount}`;
+        listItem.textContent = `$${expense.expenseAmount} - ${expense.expenseDescription} - ${expense.expenseCategory}`;
         expenseList.appendChild(listItem);
-      });
-    }
-
-    // Function to populate the select options
-    function populateSelectOptions(options) {
-      const selectElement = document.querySelector('#items');
-
-      options.forEach((option) => {
-        const optionElement = document.createElement('option');
-        optionElement.value = option;
-        optionElement.textContent = option;
-        selectElement.appendChild(optionElement);
       });
     }
 
     // Function to fetch and populate data
     async function fetchDataAndPopulate() {
-      const { expenses, options } = await fetchData();
+      const expenses = await fetchExpenses();
       populateExpenseList(expenses);
-      populateSelectOptions(options);
     }
 
     // Call the function to fetch and populate data on page load
     fetchDataAndPopulate();
+
+    // Add an event listener to the form submission
+    document.getElementById('expenseForm').addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent the default form submission behavior
+
+      const amount = document.getElementById('amount').value;
+      const description = document.getElementById('description').value;
+      const category = document.getElementById('items').value;
+
+      try {
+        const token = localStorage.getItem('token'); // Retrieve the authorization token from local storage
+
+        // Make a POST request to the server with the expense data
+        const response = await axios.post('/addexpense', {
+          amount: amount,
+          description: description,
+          items: category
+        }, {
+          headers: {
+            Authorization: token // Include the authorization token in the request headers
+          }
+        });
+
+        console.log('Expense added successfully:', response.data);
+
+        // Fetch and populate the updated expense list
+        await fetchDataAndPopulate();
+      } catch (error) {
+        console.log('An error occurred while adding the expense:', error);
+      }
+    });
+    //razorpay code
+    document.getElementById('rzp-button1').onclick=async function(e){
+      const token=localStorage.getItem('token')
+      const response=await axios.get('http://localhost:3000/purchase/premiummembership',{headers:{"Authorization":token}})
+      console.log(response)
+      var options=
+      {
+        "key":response.data.key_id,//the key id generted from dashboard
+        "order_id":response.data.order.id,//for one time payment
+        //this handler function will handle the success payment
+        "handler":async function(response){
+          await axios.post('http://localhost:3000/purchase/updatetransactionstatus',{
+            order_id:options.order_id,
+            payment_id:response.razorpay_payment_id,
+          },{headers:{"Authorization":token}})
+          alert('You are Premium user now')
+          }
+        }
+        const rzpl=new Razorpay(options)
+        rzpl.open()
+        e.preventDefault()
+        rzpl.on('payment failed',async function(response){
+          console.log(response)
+          alert('Something went wrong')
+        })
+      }
+    
   </script>
 </body>
 </html>

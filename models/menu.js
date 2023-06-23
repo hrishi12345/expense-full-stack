@@ -1,64 +1,59 @@
-const db=require('../util/database')
-module.exports=class Product{
-    constructor(email,username,password){
-        this.email=email
-        this.username=username
-        this.password=password
-    }
-    save() {
-        return db
-          .execute('INSERT INTO email (email, username, password) VALUES (?, ?, ?)', [
-            this.email,
-            this.username,
-            this.password,
-          ])
-          .then(([result]) => {
-            console.log('Product saved successfully.');
-            return result.insertId;
-          })
-          .catch((error) => {
-            console.log('An error occurred while saving the product:', error);
-            throw error;
-          });}
-          static signUp(email, username, password) {
-            const product = new Product(email, username, password);
-            return product.save();
-          }
-          static login(email, password) {
-            return db.execute('SELECT email, password FROM email WHERE email=? AND password=?', [email, password])
-              .then(([rows, fieldData]) => {
-                if (rows.length > 0) {
-                  
-                  return true;
-                } else {
-                  res.status(401).send('User not Found')
-                  return false;
-                }
-              })
-              .catch((error) => {
-                console.log('An error occurred while performing login:', error);
-                throw error;
-              });
-          }
-          
-          static fetchById(email) {
-            return db.execute('SELECT EMAIL FROM email WHERE email=?', [email])
-              .then(([rows, fieldData]) => {
-                if (rows.length > 0) {
-                  console.log('User exists');
-                  return true;
-                } else {
-                  res.status(404).send('User does not exist');
-                  return false;
-                }
-              })
-              .catch((error) => {
-                console.log('An error occurred while fetching user by ID:', error);
-                throw error;
-              });
-          }
-          
-        
-        
-    
-}
+const db = require('../util/database');
+const jwt = require('jsonwebtoken');
+
+module.exports = class Menu {
+  constructor(email, password, username, userId) {
+    this.email = email;
+    this.password = password;
+    this.username = username;
+    this.userId = userId;
+  }
+
+  static fetchById(email) {
+    return db
+      .execute('SELECT * FROM users WHERE email = ?', [email])
+      .then(([rows, fieldData]) => {
+        if (rows.length > 0) {
+          return rows[0];
+        } else {
+          return null;
+        }
+      })
+      .catch((error) => {
+        console.log('An error occurred while fetching user by ID:', error);
+        throw error;
+      });
+  }
+
+  static signUp(email, password, username, userId) {
+    return db
+      .execute('INSERT INTO users (email, password, username, userId) VALUES (?, ?, ?, ?)', [email, password, username, userId])
+      .then(([result]) => {
+        console.log('User saved successfully.');
+        return result.insertId;
+      })
+      .catch((error) => {
+        console.log('An error occurred while saving the user:', error);
+        throw error;
+      });
+  }
+
+  static login(email, password) {
+    return db.execute('SELECT * FROM users WHERE email=? AND password=?', [email, password])
+      .then(([rows, fieldData]) => {
+        if (rows.length > 0) {
+          return rows[0];
+        } else {
+          return null;
+        }
+      })
+      .catch((error) => {
+        console.log('An error occurred while performing login:', error);
+        throw error;
+      });
+  }
+
+  static generateToken(userId) {
+    return jwt.sign({ userId }, '12590sdfkl', { expiresIn: '1h' });
+  }
+};

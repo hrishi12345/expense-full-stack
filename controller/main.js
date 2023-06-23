@@ -4,7 +4,6 @@ exports.postAddProduct = (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
     const orderId = req.params.orderId;
-  
     if (orderId) {
       // Update an existing order
       Product.updateOrder(orderId, dish, amount, table)
